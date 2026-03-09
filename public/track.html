@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Tracking - Employee Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .card h2 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        .card p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .consent-section {
+            text-align: center;
+        }
+
+        .tracking-status {
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .location-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .error-box {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .session-info {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Employee Location Tracking</h1>
+    </div>
+
+    <div class="container">
+        <!-- Invalid Session -->
+        <div class="card" id="invalidSession">
+            <h2>Invalid Tracking Session</h2>
+            <p>This tracking link is invalid or has expired.</p>
+            <p>Please contact your administrator for a new tracking link.</p>
+        </div>
+
+        <!-- Consent Section -->
+        <div class="card hidden" id="consentSection">
+            <h2>Location Tracking Request</h2>
+            
+            <div class="session-info" id="sessionInfo">
+                <strong>Session Information:</strong><br>
+                <span id="sessionDetails"></span>
+            </div>
+
+            <div class="warning-box">
+                <strong>📍 Location Access Required</strong><br>
+                Your administrator has requested to track your location for work purposes.
+            </div>
+
+            <div class="card">
+                <h3>What will be tracked?</h3>
+                <ul style="text-align: left; margin-left: 2rem; line-height: 1.8;">
+                    <li>Your current GPS coordinates (latitude, longitude)</li>
+                    <li>Location accuracy information</li>
+                    <li>Timestamp of each location update</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Privacy Information</h3>
+                <ul style="text-align: left; margin-left: 2rem; line-height: 1.8;">
+                    <li>Location data is transmitted securely</li>
+                    <li>Tracking can be stopped by your administrator at any time</li>
+                    <li>You can revoke consent by closing this page</li>
+                    <li>Location data is only used for work-related purposes</li>
+                </ul>
+            </div>
+
+            <div class="consent-section">
+                <p style="margin: 2rem 0; font-size: 1.1rem;">
+                    <strong>Do you consent to share your location?</strong>
+                </p>
+                
+                <button class="btn btn-success" onclick="giveConsent(true)">
+                    ✅ Yes, I consent
+                </button>
+                
+                <button class="btn btn-danger" onclick="giveConsent(false)">
+                    ❌ No, I decline
+                </button>
+            </div>
+        </div>
+
+        <!-- Active Tracking Section -->
+        <div class="card hidden" id="trackingSection">
+            <h2>Location Tracking Active</h2>
+            
+            <div class="status-active">
+                ✅ Your location is being shared with your administrator
+            </div>
+
+            <div class="location-info" id="currentLocation">
+                <strong>Current Location:</strong><br>
+                Waiting for GPS signal...
+            </div>
+
+            <div class="card">
+                <h3>Tracking Status</h3>
+                <div id="trackingStatus">
+                    <div class="spinner"></div>
+                    <p>Acquiring GPS signal...</p>
+                </div>
+            </div>
+
+            <div class="consent-section">
+                <p style="margin: 2rem 0;">
+                    <strong>You can stop sharing your location at any time by closing this page.</strong>
+                </p>
+                
+                <button class="btn btn-secondary" onclick="stopTracking()">
+                    🛑 Stop Sharing Location
+                </button>
+            </div>
+        </div>
+
+        <!-- Declined Section -->
+        <div class="card hidden" id="declinedSection">
+            <h2>Location Tracking Declined</h2>
+            
+            <div class="error-box">
+                You have declined to share your location.
+            </div>
+            
+            <p>Your administrator has been notified that you do not consent to location tracking.</p>
+            
+            <p>If you change your mind, you can refresh this page to provide consent.</p>
+            
+            <div class="consent-section">
+                <button class="btn btn-primary" onclick="location.reload()">
+                    🔄 Refresh Page
+                </button>
+            </div>
+        </div>
+
+        <!-- Session Ended Section -->
+        <div class="card hidden" id="endedSection">
+            <h2>Tracking Session Ended</h2>
+            
+            <div class="success-box">
+                Your administrator has ended the location tracking session.
+            </div>
+            
+            <p>Location sharing has been stopped. You can safely close this page.</p>
+            
+            <p>Thank you for your participation.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>This is a secure employee location tracking system.</p>
+        <p>All data is transmitted encrypted and used only for work purposes.</p>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let sessionId = null;
+        let sessionData = null;
+        let socket = io();
+        let watchId = null;
+        let trackingInterval = null;
+
+        // Get session ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        sessionId = urlParams.get('session') || window.location.pathname.split('/').pop();
+
+        // Initialize
+        if (sessionId) {
+            loadSession();
+        } else {
+            showSection('invalidSession');
+        }
+
+        // Socket event listeners
+        socket.on('session_ended', (data) => {
+            if (data.sessionId === sessionId) {
+                stopTracking();
+                showSection('endedSection');
+            }
+        });
+
+        function loadSession() {
+            fetch(`/api/sessions/${sessionId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.id) {
+                    sessionData = data;
+                    showSessionInfo();
+                    
+                    if (data.status === 'pending') {
+                        showSection('consentSection');
+                    } else if (data.status === 'active') {
+                        showSection('trackingSection');
+                        startTracking();
+                    } else if (data.status === 'declined') {
+                        showSection('declinedSection');
+                    } else if (data.status === 'ended') {
+                        showSection('endedSection');
+                    }
+                } else {
+                    showSection('invalidSession');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading session:', error);
+                showSection('invalidSession');
+            });
+        }
+
+        function showSessionInfo() {
+            const detailsDiv = document.getElementById('sessionDetails');
+            detailsDiv.innerHTML = `
+                Session ID: ${sessionId}<br>
+                Employee: ${sessionData.employee_name || sessionData.employee_id}<br>
+                Status: ${sessionData.status}<br>
+                Created: ${new Date(sessionData.created_at).toLocaleString()}
+            `;
+        }
+
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.add('hidden');
+            });
+            
+            // Show requested section
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        function giveConsent(consent) {
+            fetch(`/api/sessions/${sessionId}/consent`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    consent: consent,
+                    employeeId: sessionData.employee_id 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (consent) {
+                        showSection('trackingSection');
+                        startTracking();
+                    } else {
+                        showSection('declinedSection');
+                    }
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to record consent'));
+                }
+            })
+            .catch(error => {
+                console.error('Error recording consent:', error);
+                alert('Error recording consent. Please try again.');
+            });
+        }
+
+        function startTracking() {
+            // Join socket room for this session
+            socket.emit('join_session', sessionId);
+
+            // Check if geolocation is supported
+            if (!navigator.geolocation) {
+                updateLocationDisplay('Geolocation is not supported by your browser');
+                return;
+            }
+
+            // Request high accuracy location
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            };
+
+            // Start watching position
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const locationData = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    };
+                    
+                    sendLocation(locationData);
+                    updateLocationDisplay(locationData);
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    updateLocationDisplay('Error getting location: ' + error.message);
+                },
+                options
+            );
+
+            // Update status
+            document.getElementById('trackingStatus').innerHTML = `
+                <div class="status-active">
+                    ✅ Location tracking is active and sharing with administrator
+                </div>
+                <p style="margin-top: 1rem;">Your location is being updated in real-time.</p>
+            `;
+        }
+
+        function sendLocation(locationData) {
+            fetch(`/api/sessions/${sessionId}/location`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(locationData)
+            })
+            .catch(error => {
+                console.error('Error sending location:', error);
+            });
+        }
+
+        function updateLocationDisplay(locationData) {
+            const locationDiv = document.getElementById('currentLocation');
+            
+            if (typeof locationData === 'string') {
+                locationDiv.innerHTML = `<strong>Status:</strong><br>${locationData}`;
+            } else {
+                locationDiv.innerHTML = `
+                    <strong>Current Location:</strong><br>
+                    Latitude: ${locationData.latitude.toFixed(6)}<br>
+                    Longitude: ${locationData.longitude.toFixed(6)}<br>
+                    Accuracy: ${locationData.accuracy ? locationData.accuracy.toFixed(2) + 'm' : 'Unknown'}<br>
+                    Last Update: ${new Date().toLocaleString()}<br>
+                    <a href="https://www.google.com/maps?q=${locationData.latitude},${locationData.longitude}" target="_blank">View on Google Maps</a>
+                `;
+            }
+        }
+
+        function stopTracking() {
+            // Stop watching position
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+
+            // Clear any intervals
+            if (trackingInterval !== null) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+            }
+
+            // Leave socket room
+            socket.emit('leave_session', sessionId);
+        }
+
+        // Handle page visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Page is hidden, reduce tracking frequency
+                console.log('Page hidden - reducing tracking frequency');
+            } else {
+                // Page is visible, resume normal tracking
+                console.log('Page visible - resuming normal tracking');
+            }
+        });
+
+        // Handle page unload
+        window.addEventListener('beforeunload', () => {
+            stopTracking();
+        });
+    </script>
+</body>
+</html>
